@@ -5,11 +5,15 @@ import { Navigate } from "react-router-dom";
 
 export default function ProtectedRoute({ children }) {
   const { user } = useContext(AuthContext);
-  const [allowed, setAllowed] = useState(null);
+  const [status, setStatus] = useState("loading"); 
+  // loading | no-user | no-sub | allowed
 
   useEffect(() => {
     const checkSubscription = async () => {
-      if (!user) return setAllowed(false);
+      if (!user) {
+        setStatus("no-user");
+        return;
+      }
 
       const { data } = await supabase
         .from("subscriptions")
@@ -18,13 +22,31 @@ export default function ProtectedRoute({ children }) {
         .eq("status", "active")
         .single();
 
-      setAllowed(!!data);
+      if (data) {
+        setStatus("allowed");
+      } else {
+        setStatus("no-sub");
+      }
     };
 
     checkSubscription();
   }, [user]);
 
-  if (allowed === null) return <div>Loading...</div>;
+  // ⏳ Loading state
+  if (status === "loading") {
+    return <div className="text-white p-6">Checking access...</div>;
+  }
 
-  return allowed ? children : <Navigate to="/subscribe" />;
+  // ❌ Not logged in
+  if (status === "no-user") {
+    return <Navigate to="/auth" />;
+  }
+
+  // ❌ No subscription
+  if (status === "no-sub") {
+    return <Navigate to="/subscribe" />;
+  }
+
+  // ✅ Allowed
+  return children;
 }
