@@ -6,6 +6,7 @@ import Dashboard from "../pages/Dashboard/Dashboard";
 import Subscription from "../pages/Dashboard/Subscription";
 import ProtectedRoute from "./ProtectedRoute";
 import Scores from "../pages/Dashboard/Scores";
+import AdminDashboard from "../pages/Admin/AdminDashboard";
 
 export default function AppRoutes() {
   return (
@@ -30,6 +31,7 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         />  
+        <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
     </BrowserRouter>
   );

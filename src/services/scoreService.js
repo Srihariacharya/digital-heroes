@@ -1,65 +1,53 @@
 import { supabase } from "./supabase";
 
-// ➕ Add OR Update Score (UPSERT - FINAL FIX)
 export const addScore = async (score) => {
-  try {
-    const { data: userData, error: userError } =
-      await supabase.auth.getUser();
+  const { data: userData } = await supabase.auth.getUser();
+  const user = userData.user;
 
-    if (userError || !userData?.user) {
-      throw new Error("User not authenticated");
-    }
+  if (!user) throw new Error("User not logged in");
 
-    const user = userData.user;
-
-    // 🔹 Use ONLY date (no time) → matches constraint
-    const today = new Date().toISOString().split("T")[0];
-
-    const { error } = await supabase
-      .from("scores")
-      .upsert(
-        [
-          {
-            user_id: user.id,
-            score: Number(score),
-            played_at: today, // ✅ IMPORTANT FIX
-          },
-        ],
-        {
-          onConflict: "user_id,played_at", // 🔥 MAGIC LINE
-        }
-      );
-
-    if (error) throw error;
-
-    return "success";
-
-  } catch (err) {
-    console.error("Score Error:", err.message);
-    throw err;
+  // ✅ PRD RANGE FIX
+  if (score < 1 || score > 45) {
+    throw new Error("Score must be between 1 and 45");
   }
-};
 
-// 📊 Get Scores
-export const getScores = async () => {
-  try {
-    const { data: userData } = await supabase.auth.getUser();
-    const user = userData.user;
+  const today = new Date().toISOString().split("T")[0];
 
-    if (!user) return [];
+  // 🔍 Get existing scores
+  const { data: scores } = await supabase
+    .from("scores")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("played_at", { ascending: true });
 
-    const { data, error } = await supabase
+  // 🔄 Replace if same date exists
+  const existing = scores.find((s) => s.played_at === today);
+
+  if (existing) {
+    await supabase
       .from("scores")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("played_at", { ascending: false });
+      .update({ score })
+      .eq("id", existing.id);
 
-    if (error) throw error;
-
-    return data || [];
-
-  } catch (err) {
-    console.error(err);
-    return [];
+    return "updated";
   }
+
+  // 🧠 Keep only last 5
+  if (scores.length >= 5) {
+    const oldest = scores[0];
+    await supabase.from("scores").delete().eq("id", oldest.id);
+  }
+
+  // ➕ Insert new
+  const { error } = await supabase.from("scores").insert([
+    {
+      user_id: user.id,
+      score,
+      played_at: today,
+    },
+  ]);
+
+  if (error) throw error;
+
+  return "added";
 };
