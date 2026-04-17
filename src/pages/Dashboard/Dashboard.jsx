@@ -3,34 +3,31 @@ import { supabase } from "../../services/supabase";
 import { getScores } from "../../services/scoreService";
 import { useNavigate } from "react-router-dom";
 
-const navigate = useNavigate();
-
 export default function Dashboard() {
   const [scores, setScores] = useState([]);
   const [charity, setCharity] = useState(null);
-  const [user, setUser] = useState(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
-    // 🔹 Get logged-in user
     const { data } = await supabase.auth.getUser();
-    const currentUser = data.user;
-    setUser(currentUser);
+    const user = data.user;
 
-    if (!currentUser) return;
+    if (!user) return;
 
-    // 🔹 Get scores
+    // 🔹 Scores
     const scoresData = await getScores();
-    setScores(scoresData || []);
+    setScores(scoresData);
 
-    // 🔹 Get selected charity
+    // 🔹 Charity
     const { data: profile } = await supabase
       .from("profiles")
       .select("charity_id")
-      .eq("id", currentUser.id)
+      .eq("id", user.id)
       .single();
 
     if (profile?.charity_id) {
@@ -47,47 +44,42 @@ export default function Dashboard() {
   return (
     <div className="p-6 text-white">
 
-      {/* 🔥 TOP CARDS */}
+      {/* 🔝 TOP CARDS */}
       <div className="grid md:grid-cols-3 gap-6">
 
-        <div className="bg-white/5 p-6 rounded-2xl border border-white/10 shadow-lg">
+        <div className="bg-white/5 p-6 rounded-2xl">
           <h2 className="text-gray-400">Subscription</h2>
           <p className="text-2xl font-bold text-green-400">Active</p>
         </div>
 
-        <div className="bg-white/5 p-6 rounded-2xl border border-white/10 shadow-lg">
+        <div className="bg-white/5 p-6 rounded-2xl">
           <h2 className="text-gray-400">Total Winnings</h2>
           <p className="text-2xl font-bold">₹2,500</p>
         </div>
 
-        <div className="bg-white/5 p-6 rounded-2xl border border-white/10 shadow-lg">
+        <div className="bg-white/5 p-6 rounded-2xl">
           <h2 className="text-gray-400">Next Draw</h2>
           <p className="text-2xl font-bold">April 30</p>
         </div>
 
       </div>
 
-      {/* ❤️ SELECTED CHARITY */}
+      {/* ❤️ CHARITY */}
       <div className="mt-8">
         <h2 className="text-xl mb-4">Your Selected Charity ❤️</h2>
 
-        <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
+        <div className="bg-white/5 p-6 rounded-2xl">
           {charity ? (
             <>
               <img
                 src={charity.image}
-                alt={charity.name}
                 className="w-full h-40 object-cover rounded mb-4"
               />
-              <h3 className="text-lg font-semibold">{charity.name}</h3>
-              <p className="text-gray-400 text-sm">
-                {charity.description}
-              </p>
+              <h3>{charity.name}</h3>
+              <p className="text-gray-400">{charity.description}</p>
             </>
           ) : (
-            <p className="text-gray-400">
-              No charity selected yet.
-            </p>
+            <p>No charity selected</p>
           )}
         </div>
       </div>
@@ -96,50 +88,37 @@ export default function Dashboard() {
       <div className="mt-8">
         <h2 className="text-xl mb-4">Your Recent Scores ⛳</h2>
 
-        <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
-
+        <div className="bg-white/5 p-6 rounded-2xl">
           {scores.length === 0 ? (
-            <p className="text-gray-400">
-              No scores added yet.
-            </p>
+            <p>No scores added yet.</p>
           ) : (
-            <div className="space-y-2">
-              {scores.map((s) => (
-                <div
-                  key={s.id}
-                  className="flex justify-between border-b border-white/10 pb-2"
-                >
-                  <span>Score: {s.score}</span>
-                  <span className="text-gray-400 text-sm">
-                    {new Date(s.played_at).toLocaleDateString()}
-                  </span>
-                </div>
-              ))}
-            </div>
+            scores.map((s) => (
+              <div key={s.id} className="flex justify-between mb-2">
+                <span>Score: {s.score}</span>
+                <span>{new Date(s.played_at).toLocaleDateString()}</span>
+              </div>
+            ))
           )}
-
         </div>
       </div>
 
-      {/* 🎯 QUICK ACTION */}
-      <div className="mt-8">
-        <h2 className="text-xl mb-4">Quick Actions</h2>
+      {/* 🚀 ACTIONS */}
+      <div className="mt-8 flex gap-4">
 
-        <div className="flex gap-4">
-          <button
-            onClick={() => window.location.href = "/charities"}
-            className="bg-primary px-6 py-3 rounded-xl hover:scale-105 transition"
-          >
-            Change Charity
-          </button>
+        <button
+          onClick={() => navigate("/charities")}
+          className="bg-primary px-6 py-3 rounded-xl"
+        >
+          Change Charity
+        </button>
 
-          <button
-            onClick={() => navigate("/dashboard/scores")}
-            className="bg-accent px-6 py-3 rounded-xl hover:scale-105 transition"
-           > 
-            Add Score
-         </button> 
-        </div>
+        <button
+          onClick={() => navigate("/dashboard/scores")}
+          className="bg-accent px-6 py-3 rounded-xl"
+        >
+          Add Score
+        </button>
+
       </div>
 
     </div>

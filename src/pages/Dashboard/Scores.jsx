@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { supabase } from "../../services/supabase";
+import { addScore } from "../../services/scoreService";
 import { useNavigate } from "react-router-dom";
 
 export default function Scores() {
@@ -8,34 +8,28 @@ export default function Scores() {
 
   const navigate = useNavigate();
 
-  const addScore = async () => {
+  const handleAddScore = async () => {
     if (!score) {
       alert("Enter a score");
+      return;
+    }
+
+    if (score < 1 || score > 200) {
+      alert("Enter valid score (1–200)");
       return;
     }
 
     try {
       setLoading(true);
 
-      const { data } = await supabase.auth.getUser();
-      const user = data.user;
+      const result = await addScore(score);
 
-      if (!user) {
-        alert("Login required");
-        return;
+      if (result === "updated") {
+        alert("Score updated for today 🔄");
+      } else {
+        alert("Score added successfully ⛳");
       }
 
-      await supabase.from("scores").insert([
-        {
-          user_id: user.id,
-          score: Number(score),
-          played_at: new Date(),
-        },
-      ]);
-
-      alert("Score added successfully ⛳");
-
-      // 🔁 go back to dashboard
       navigate("/dashboard");
 
     } catch (err) {
@@ -69,11 +63,11 @@ export default function Scores() {
         />
 
         <button
-          onClick={addScore}
+          onClick={handleAddScore}
           disabled={loading}
           className="bg-primary px-6 py-3 rounded-xl hover:scale-105 transition disabled:opacity-50"
         >
-          {loading ? "Adding..." : "Add"}
+          {loading ? "Saving..." : "Save Score"}
         </button>
       </div>
 
