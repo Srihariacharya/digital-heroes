@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 
-// ➕ Add or Update Score
+// ➕ Add OR Update Score (UPSERT - FINAL FIX)
 export const addScore = async (score) => {
   try {
     const { data: userData, error: userError } =
@@ -12,45 +12,27 @@ export const addScore = async (score) => {
 
     const user = userData.user;
 
-    // 🔹 Today's date range
+    // 🔹 Use ONLY date (no time) → matches constraint
     const today = new Date().toISOString().split("T")[0];
 
-    // 🔍 Check if already exists today
-    const { data: existing, error: fetchError } = await supabase
+    const { error } = await supabase
       .from("scores")
-      .select("*")
-      .eq("user_id", user.id)
-      .gte("played_at", today)
-      .lt("played_at", today + "T23:59:59");
-
-    if (fetchError) throw fetchError;
-
-    // 🔄 If exists → UPDATE
-    if (existing && existing.length > 0) {
-      const { error: updateError } = await supabase
-        .from("scores")
-        .update({ score: Number(score) })
-        .eq("id", existing[0].id);
-
-      if (updateError) throw updateError;
-
-      return "updated";
-    }
-
-    // ➕ Insert new
-    const { error: insertError } = await supabase
-      .from("scores")
-      .insert([
+      .upsert(
+        [
+          {
+            user_id: user.id,
+            score: Number(score),
+            played_at: today, // ✅ IMPORTANT FIX
+          },
+        ],
         {
-          user_id: user.id,
-          score: Number(score),
-          played_at: new Date().toISOString(),
-        },
-      ]);
+          onConflict: "user_id,played_at", // 🔥 MAGIC LINE
+        }
+      );
 
-    if (insertError) throw insertError;
+    if (error) throw error;
 
-    return "inserted";
+    return "success";
 
   } catch (err) {
     console.error("Score Error:", err.message);
@@ -61,14 +43,10 @@ export const addScore = async (score) => {
 // 📊 Get Scores
 export const getScores = async () => {
   try {
-    const { data: userData, error: userError } =
-      await supabase.auth.getUser();
-
-    if (userError || !userData?.user) {
-      throw new Error("User not authenticated");
-    }
-
+    const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;
+
+    if (!user) return [];
 
     const { data, error } = await supabase
       .from("scores")
@@ -81,7 +59,7 @@ export const getScores = async () => {
     return data || [];
 
   } catch (err) {
-    console.error("Get Scores Error:", err.message);
+    console.error(err);
     return [];
   }
 };
