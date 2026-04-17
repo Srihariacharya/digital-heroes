@@ -5,8 +5,13 @@ export default function CharityCard({
   isLoading,
 }) {
   return (
-    <div className="bg-white/5 p-6 rounded-2xl border border-white/10 shadow-lg">
-
+    <div
+      className={`bg-white/5 p-6 rounded-2xl shadow-lg transition hover:scale-[1.02] ${
+        isSelected
+          ? "border-2 border-green-500"
+          : "border border-white/10"
+      }`}
+    >
       <img
         src={charity.image}
         alt={charity.name}
@@ -22,11 +27,11 @@ export default function CharityCard({
       <button
         onClick={() => onSelect(charity.id)}
         disabled={isSelected || isLoading}
-        className={`mt-4 px-4 py-2 rounded ${
+        className={`mt-4 px-4 py-2 rounded transition ${
           isSelected
             ? "bg-gray-500"
             : "bg-primary hover:scale-105"
-        } transition disabled:opacity-50`}
+        } disabled:opacity-50`}
       >
         {isLoading
           ? "Selecting..."
@@ -34,7 +39,6 @@ export default function CharityCard({
           ? "Selected ✅"
           : "Select"}
       </button>
-
     </div>
   );
 }

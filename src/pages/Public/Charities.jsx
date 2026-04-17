@@ -16,7 +16,7 @@ export default function Charities() {
     getSelectedCharity();
   }, []);
 
-  // 🔹 Load all charities
+  // 🔹 Load charities
   const loadCharities = async () => {
     try {
       const data = await getCharities();
@@ -26,7 +26,7 @@ export default function Charities() {
     }
   };
 
-  // 🔹 Get user's selected charity
+  // 🔹 Get selected charity
   const getSelectedCharity = async () => {
     const { data } = await supabase.auth.getUser();
     const user = data.user;
@@ -62,15 +62,9 @@ export default function Charities() {
         .update({ charity_id: id })
         .eq("id", user.id);
 
-      // ✅ Update UI instantly
       setSelectedId(id);
 
-      // ✅ Better UX
       alert("Charity selected successfully ❤️");
-
-      // ✅ Redirect to dashboard
-      navigate("/dashboard");
-
     } catch (err) {
       alert(err.message);
     } finally {
@@ -80,6 +74,25 @@ export default function Charities() {
 
   return (
     <div className="p-6 text-white">
+
+      {/* 🔙 Navigation Bar */}
+      <div className="flex justify-between items-center mb-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="text-gray-400 hover:text-white transition"
+        >
+          ← Back
+        </button>
+
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="bg-primary px-4 py-2 rounded-lg hover:scale-105 transition"
+        >
+          Dashboard →
+        </button>
+      </div>
+
+      {/* 🔥 Heading */}
       <h1 className="text-3xl mb-6 text-center">
         Choose a Cause You Care About ❤️
       </h1>
@@ -88,15 +101,17 @@ export default function Charities() {
         A portion of your subscription goes directly to your chosen charity.
       </p>
 
+      {/* 🧱 Charity Cards */}
       <div className="grid md:grid-cols-3 gap-6">
         {charities.map((c) => (
-          <CharityCard
-            key={c.id}
-            charity={c}
-            onSelect={selectCharity}
-            isSelected={selectedId === c.id}
-            isLoading={loadingId === c.id}
-          />
+          <div key={c.id}>
+            <CharityCard
+              charity={c}
+              onSelect={selectCharity}
+              isSelected={selectedId === c.id}
+              isLoading={loadingId === c.id}
+            />
+          </div>
         ))}
       </div>
     </div>
