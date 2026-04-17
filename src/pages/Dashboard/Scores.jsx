@@ -1,0 +1,1 @@
+import { addScore, getScores } from "../../services/scoreService";
