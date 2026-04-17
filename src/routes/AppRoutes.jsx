@@ -5,6 +5,7 @@ import Charities from "../pages/Public/Charities";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import Subscription from "../pages/Dashboard/Subscription";
 import ProtectedRoute from "./ProtectedRoute";
+import Scores from "../pages/Dashboard/Scores";
 
 export default function AppRoutes() {
   return (
@@ -21,6 +22,14 @@ export default function AppRoutes() {
               <Dashboard />
           }
         />
+        <Route
+        path="/dashboard/scores"
+          element={
+            <ProtectedRoute>
+              <Scores /> 
+            </ProtectedRoute>
+          }
+        />  
       </Routes>
     </BrowserRouter>
   );

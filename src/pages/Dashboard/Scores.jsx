@@ -1,67 +1,82 @@
-import { useEffect, useState } from "react";
-import { addScore, getScores } from "../../services/scoreService";
+import { useState } from "react";
+import { supabase } from "../../services/supabase";
+import { useNavigate } from "react-router-dom";
 
 export default function Scores() {
-  const [scores, setScores] = useState([]);
-  const [value, setValue] = useState("");
-  const [date, setDate] = useState("");
+  const [score, setScore] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const loadScores = async () => {
-    const data = await getScores();
-    setScores(data);
-  };
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    loadScores();
-  }, []);
+  const addScore = async () => {
+    if (!score) {
+      alert("Enter a score");
+      return;
+    }
 
-  const handleSubmit = async () => {
     try {
-      await addScore(Number(value), date);
-      setValue("");
-      setDate("");
-      loadScores();
+      setLoading(true);
+
+      const { data } = await supabase.auth.getUser();
+      const user = data.user;
+
+      if (!user) {
+        alert("Login required");
+        return;
+      }
+
+      await supabase.from("scores").insert([
+        {
+          user_id: user.id,
+          score: Number(score),
+          played_at: new Date(),
+        },
+      ]);
+
+      alert("Score added successfully ⛳");
+
+      // 🔁 go back to dashboard
+      navigate("/dashboard");
+
     } catch (err) {
       alert(err.message);
+    } finally {
+      setLoading(false);
+      setScore("");
     }
   };
 
   return (
     <div className="p-6 text-white">
-      <h1 className="text-2xl mb-4">Your Scores</h1>
 
-      {/* INPUT */}
-      <div className="mb-4">
+      {/* 🔙 Back */}
+      <button
+        onClick={() => navigate(-1)}
+        className="mb-4 text-gray-400 hover:text-white"
+      >
+        ← Back
+      </button>
+
+      <h1 className="text-2xl mb-6">Add Score ⛳</h1>
+
+      <div className="flex gap-4">
         <input
           type="number"
-          placeholder="Score (1-45)"
-          className="p-2 mr-2 bg-gray-800"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-        />
-
-        <input
-          type="date"
-          className="p-2 mr-2 bg-gray-800"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
+          placeholder="Enter your score"
+          value={score}
+          onChange={(e) => setScore(e.target.value)}
+          className="p-3 rounded bg-gray-800 outline-none"
         />
 
         <button
-          onClick={handleSubmit}
-          className="bg-green-500 px-4 py-2"
+          onClick={addScore}
+          disabled={loading}
+          className="bg-primary px-6 py-3 rounded-xl hover:scale-105 transition disabled:opacity-50"
         >
-          Add Score
+          {loading ? "Adding..." : "Add"}
         </button>
       </div>
 
-      {/* LIST */}
-      {scores.map((s) => (
-        <div key={s.id} className="bg-gray-800 p-3 mb-2 rounded">
-          <p>Score: {s.score}</p>
-          <p>Date: {s.played_at}</p>
-        </div>
-      ))}
     </div>
   );
 }

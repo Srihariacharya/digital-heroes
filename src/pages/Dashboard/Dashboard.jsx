@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../services/supabase";
 import { getScores } from "../../services/scoreService";
+import { useNavigate } from "react-router-dom";
+
+const navigate = useNavigate();
 
 export default function Dashboard() {
   const [scores, setScores] = useState([]);
@@ -131,11 +134,11 @@ export default function Dashboard() {
           </button>
 
           <button
-            onClick={() => window.location.href = "/dashboard/scores"}
+            onClick={() => navigate("/dashboard/scores")}
             className="bg-accent px-6 py-3 rounded-xl hover:scale-105 transition"
-          >
+           > 
             Add Score
-          </button>
+         </button> 
         </div>
       </div>
 
