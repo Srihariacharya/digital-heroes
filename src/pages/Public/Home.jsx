@@ -1,6 +1,9 @@
+import { useNavigate } from "react-router-dom";
 import Button from "../../components/common/Button";
 
 export default function Home() {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen flex flex-col justify-center items-center text-center px-6">
 
@@ -14,8 +17,13 @@ export default function Home() {
       </p>
 
       <div className="mt-8 flex gap-4">
-        <Button>Get Started</Button>
-        <Button>View Charities</Button>
+        <Button onClick={() => navigate("/auth")}>
+          Get Started
+        </Button>
+
+        <Button onClick={() => navigate("/charities")}>
+          View Charities
+        </Button>
       </div>
 
     </div>
